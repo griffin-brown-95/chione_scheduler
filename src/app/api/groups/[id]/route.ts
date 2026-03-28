@@ -103,3 +103,53 @@ export async function PUT(
     return err("Internal server error");
   }
 }
+
+// ---------------------------------------------------------------------------
+// DELETE /api/groups/[id]
+//
+// Admin: may delete any group.
+// Team users: may delete only groups that belong to their own team.
+// ---------------------------------------------------------------------------
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const ctx = await getAuthContext();
+    if (!ctx) return unauthorized();
+
+    const { id } = await params;
+
+    // Verify the group exists and check ownership
+    const { data: existing, error: fetchErr } = await ctx.supabase
+      .from("groups")
+      .select("id, team_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchErr) {
+      if (fetchErr.code === "PGRST116") return notFound("Group");
+      console.error("[groups/[id]] DELETE fetch error", fetchErr.message);
+      return err("Failed to fetch group");
+    }
+
+    if (ctx.profile.role === "team") {
+      if (existing.team_id !== ctx.profile.team_id) return forbidden();
+    }
+
+    const { error } = await ctx.supabase
+      .from("groups")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("[groups/[id]] DELETE error", error.message);
+      return err("Failed to delete group");
+    }
+
+    return ok({ deleted: true });
+  } catch (e) {
+    console.error("[groups/[id]] DELETE unexpected error", e);
+    return err("Internal server error");
+  }
+}

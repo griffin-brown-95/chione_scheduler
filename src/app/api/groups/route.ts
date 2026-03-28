@@ -8,6 +8,60 @@ const GROUP_SELECT =
   "id, team_id, name, active, notes, created_at, updated_at";
 
 // ---------------------------------------------------------------------------
+// GET /api/groups
+//
+// Authenticated (any role).
+// Admin: sees all groups, optionally filtered by ?team_id=
+// Team users: sees only their own team's groups (enforced by RLS + profile check)
+//
+// Query params:
+//   ?team_id=  — filter to a specific team (admin only)
+//   ?active=   — "true" | "false" (default: all)
+// ---------------------------------------------------------------------------
+export async function GET(req: NextRequest) {
+  try {
+    const ctx = await getAuthContext();
+    if (!ctx) return unauthorized();
+
+    const p = req.nextUrl.searchParams;
+    const teamIdParam = p.get("team_id");
+    const activeParam = p.get("active");
+
+    let query = ctx.supabase
+      .from("groups")
+      .select(GROUP_SELECT, { count: "exact" })
+      .order("name");
+
+    // Admin: can filter by team_id; if not filtering, sees all via RLS
+    if (ctx.profile.role === "admin") {
+      if (teamIdParam) {
+        if (!isUuid(teamIdParam)) return badRequest("team_id must be a valid UUID");
+        query = query.eq("team_id", teamIdParam);
+      }
+    } else {
+      // Team users: RLS restricts to their own team, but also enforce in app layer
+      if (!ctx.profile.team_id) return forbidden();
+      query = query.eq("team_id", ctx.profile.team_id);
+    }
+
+    if (activeParam === "true")  query = query.eq("active", true);
+    if (activeParam === "false") query = query.eq("active", false);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error("[groups] GET error", error.message);
+      return err("Failed to fetch groups");
+    }
+
+    return ok(data as GroupDetail[], { total: count ?? 0 });
+  } catch (e) {
+    console.error("[groups] GET unexpected error", e);
+    return err("Internal server error");
+  }
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/groups
 //
 // Creates a group (sub-unit within a team, e.g. "U16 Girls", "Elite A").
