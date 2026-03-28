@@ -72,8 +72,12 @@ Replaces a Google Sheet. External consumers include video boards and monthly inv
 - `create_booking()` — atomic conflict check + insert, raises P0001/P0002
 - `rotate_pricing_rate()` — closes old rate, inserts new one, raises P0003
 
-## Write endpoint conventions
-- Booking creation always goes through `create_booking()` RPC
-- Rate changes always go through `rotate_pricing_rate()` RPC  
-- Validation helpers in `src/app/api/_lib/validate.ts`
-- Team PUT uses service client + app-level auth (see bookings/[id]/route.ts)
+## API conventions (updated)
+- Auth: use `getAuthContext()` + explicit role check for admin routes
+  — never use `getAdminContext()` in write routes
+  — authenticated non-admins should receive 403, not 401
+- Shared select strings: `BOOKING_SELECT`, `GROUP_SELECT` in `src/app/api/_lib/bookings.ts`
+- Shared constants: `TEAM_STATUSES`, `USER_ROLES` in `src/lib/api/constants.ts`
+- When fetching a lane + its space, use a single joined query with embed
+  — never two sequential fetches
+- Grooming POST: lane_id presence implicitly validates space — skip separate space check
