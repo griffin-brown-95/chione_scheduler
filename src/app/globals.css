@@ -1,3 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --navy: #1A3D5C;
+  --navy-dark: #0E2438;
+  --navy-mid: #2A5478;
+  --navy-light: #4A7FA5;
+  --navy-pale: #E8EFF5;
+  --bg: #F4F2ED;
+  --surface: #FFFFFF;
+  --surface2: #EEECE7;
+  --surface3: #E5E3DE;
+  --border: rgba(0,0,0,0.09);
+  --border-mid: rgba(0,0,0,0.15);
+  --border-strong: rgba(0,0,0,0.22);
+  --text: #1A1916;
+  --text-muted: #6A6860;
+  --text-hint: #9E9C96;
+  --gold: #9A7209;
+  --gold-bg: #FBF6E7;
+  --gold-border: rgba(154,114,9,0.25);
+  --green: #1B6B3A;
+  --green-bg: #EBF5EE;
+  --green-border: rgba(27,107,58,0.25);
+  --red: #B83232;
+  --red-bg: #FCEAEA;
+  --red-border: rgba(184,50,50,0.25);
+  --purple: #5B3FA8;
+  --purple-bg: #F0EDFC;
+  --purple-border: rgba(91,63,168,0.25);
+  --teal: #0D7A6A;
+  --teal-bg: #E6F4F2;
+  --teal-border: rgba(13,122,106,0.25);
+  --r: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
