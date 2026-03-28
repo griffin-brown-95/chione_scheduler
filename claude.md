@@ -67,3 +67,13 @@ Replaces a Google Sheet. External consumers include video boards and monthly inv
 - Service role client in `src/lib/supabase/service.ts` for public endpoints only
 - Schedule logic lives in `app/api/_lib/schedule.ts` — reuse `buildSchedule()`
 - TypeScript types for all response shapes in `src/lib/api/types.ts`
+
+## Database functions (do not recreate these in app code)
+- `create_booking()` — atomic conflict check + insert, raises P0001/P0002
+- `rotate_pricing_rate()` — closes old rate, inserts new one, raises P0003
+
+## Write endpoint conventions
+- Booking creation always goes through `create_booking()` RPC
+- Rate changes always go through `rotate_pricing_rate()` RPC  
+- Validation helpers in `src/app/api/_lib/validate.ts`
+- Team PUT uses service client + app-level auth (see bookings/[id]/route.ts)

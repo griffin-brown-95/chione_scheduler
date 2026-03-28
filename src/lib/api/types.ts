@@ -200,3 +200,67 @@ export interface LaneDetail {
   active: boolean;
   notes: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Pricing rates
+// ---------------------------------------------------------------------------
+
+export interface PricingRateDetail {
+  id: string;
+  lane_id: string;
+  team_status: TeamStatus;
+  /** Cents per booked slot — set for block_scheduled lanes, null for rink */
+  rate_cents_per_slot: number | null;
+  /** Cents per 15-minute increment — set for rink lanes, null for block_scheduled */
+  rate_cents_per_15min: number | null;
+  effective_from: string;
+  /** null = currently active rate */
+  effective_to: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+// ---------------------------------------------------------------------------
+// Grooming schedules
+// ---------------------------------------------------------------------------
+
+export interface GroomingScheduleDetail {
+  id: string;
+  space_id: string;
+  /** null = entire space is being groomed */
+  lane_id: string | null;
+  scheduled_date: string;
+  start_time: string;
+  end_time: string;
+  groomer: string | null;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---------------------------------------------------------------------------
+// Groups (full detail — distinct from GroupSummary which is used in joins)
+// ---------------------------------------------------------------------------
+
+export interface GroupDetail {
+  id: string;
+  team_id: string;
+  name: string;
+  active: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---------------------------------------------------------------------------
+// Invites
+// ---------------------------------------------------------------------------
+
+export interface InviteResult {
+  id: string;
+  email: string;
+  team_id: string | null;
+  role: UserRole;
+  invited_at: string;
+}
