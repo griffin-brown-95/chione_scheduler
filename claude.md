@@ -81,3 +81,35 @@ Replaces a Google Sheet. External consumers include video boards and monthly inv
 - When fetching a lane + its space, use a single joined query with embed
   — never two sequential fetches
 - Grooming POST: lane_id presence implicitly validates space — skip separate space check
+
+## Routing structure
+- All authenticated pages live in src/app/(app)/
+- Auth pages live in src/app/(auth)/
+- Never create pages at src/app/[page]/page.tsx — they won't have the auth guard
+
+## Frontend progress
+### Completed pages
+- `/dashboard` — server component, admin + team views, stats + recent bookings
+- `/bookings` — admin only, filterable + paginated, ViewBookingModal reused
+- `/my-bookings` — team only, scoped to team_id, ViewBookingModal reused
+
+### Completed components
+- `components/Sidebar.tsx` — role-aware nav, sign-out
+- `components/Toast.tsx` — ToastProvider + useToast() hook
+- `components/ViewBookingModal.tsx` — reusable, accepts role + myTeamId props
+
+### Remaining pages
+- `/builder` — not started  
+- `/teams` — not started (invite flow lives here)
+- `/groups` — not started
+- `/invoicing` — not started
+
+### Routing rules
+- All authenticated pages in src/app/(app)/ — auth guard applies automatically
+- Auth pages in src/app/(auth)/
+- Never create pages at src/app/[page]/page.tsx
+
+### Component reuse rules
+- ViewBookingModal is already built — import and reuse, never recreate it
+- useToast() hook is available everywhere via ToastProvider in root layout
+- Always check existing components before creating new ones
