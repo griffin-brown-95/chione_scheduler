@@ -31,23 +31,29 @@ CREATE TYPE user_role AS ENUM ('admin', 'team');
 
 -- ---------------------------------------------------------------------------
 -- HELPER FUNCTIONS (used in RLS policies)
--- SECURITY DEFINER so they run as the role that owns the function (postgres),
--- preventing policy recursion on the profiles table.
+-- Uses LANGUAGE plpgsql so Postgres defers table-reference resolution to
+-- call time rather than creation time — avoiding the circular dependency
+-- between teams (needs auth_is_admin) → profiles (needs teams).
+-- SECURITY DEFINER prevents policy recursion on the profiles table itself.
 -- ---------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.auth_is_admin()
 RETURNS BOOLEAN
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT COALESCE(
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  RETURN COALESCE(
     (SELECT role = 'admin' FROM public.profiles WHERE id = auth.uid()),
     FALSE
   );
+END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.auth_team_id()
 RETURNS UUID
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT team_id FROM public.profiles WHERE id = auth.uid();
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  RETURN (SELECT team_id FROM public.profiles WHERE id = auth.uid());
+END;
 $$;
 
 
@@ -130,6 +136,8 @@ $$;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
 
 
 -- ---------------------------------------------------------------------------

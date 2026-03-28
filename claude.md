@@ -58,6 +58,12 @@ Replaces a Google Sheet. External consumers include video boards and monthly inv
 ## Completed
 - Scaffold: Next.js + Supabase + Tailwind ✓
 - Auth: Supabase Auth + invite flow + RLS ✓
+- Schema: full migration with versioned rates, RLS, indexes ✓
+- GET API routes: schedule, bookings, invoices, reference data ✓
 
-## Current session
-- Schema migration
+## API conventions (important — follow these in all future routes)
+- Response envelope: `{ data, error, meta }` via `ok()`, `err()` etc in `src/lib/api/response.ts`
+- Auth: use `getAuthContext()` / `getAdminContext()` from `src/lib/api/auth.ts`
+- Service role client in `src/lib/supabase/service.ts` for public endpoints only
+- Schedule logic lives in `app/api/_lib/schedule.ts` — reuse `buildSchedule()`
+- TypeScript types for all response shapes in `src/lib/api/types.ts`
