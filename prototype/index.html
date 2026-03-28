@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olympic Park — Lane Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A3D5C;--navy-dark:#0E2438;--navy-mid:#2A5478;--navy-light:#4A7FA5;--navy-pale:#E8EFF5;
+  --bg:#F4F2ED;--surface:#FFFFFF;--surface2:#EEECE7;--surface3:#E5E3DE;
+  --border:rgba(0,0,0,0.09);--border-mid:rgba(0,0,0,0.15);--border-strong:rgba(0,0,0,0.22);
+  --text:#1A1916;--text-muted:#6A6860;--text-hint:#9E9C96;
+  --gold:#9A7209;--gold-bg:#FBF6E7;--gold-border:rgba(154,114,9,0.25);
+  --green:#1B6B3A;--green-bg:#EBF5EE;--green-border:rgba(27,107,58,0.25);
+  --red:#B83232;--red-bg:#FCEAEA;--red-border:rgba(184,50,50,0.25);
+  --purple:#5B3FA8;--purple-bg:#F0EDFC;--purple-border:rgba(91,63,168,0.25);
+  --teal:#0D7A6A;--teal-bg:#E6F4F2;--teal-border:rgba(13,122,106,0.25);
+  --r:8px;--r-lg:12px;--r-xl:16px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden}
+#app{display:flex;min-height:100vh}
+#sidebar{width:228px;background:var(--navy-dark);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto}
+#main{margin-left:228px;flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sb-rings{display:flex;gap:3px;margin-bottom:9px}
+.ring{width:13px;height:13px;border-radius:50%;border:2.5px solid;display:inline-block}
+.r1{border-color:#4FC3F7}.r2{border-color:#FFD54F}.r3{border-color:#EF5350}.r4{border-color:#66BB6A}.r5{border-color:#EF5350;opacity:.5}
+.sb-logo h1{font-family:'Syne',sans-serif;color:#fff;font-size:12.5px;font-weight:600;letter-spacing:.03em;line-height:1.4}
+.sb-logo p{color:rgba(255,255,255,.42);font-size:11px;margin-top:2px}
+.sb-user{margin:10px 14px;background:rgba(255,255,255,.08);border-radius:7px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.sb-user-label{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.05em;text-transform:uppercase}
+.sb-user-name{font-size:13px;color:#fff;font-weight:500}
+.sb-user-team{font-size:11px;color:rgba(255,255,255,.5)}
+.nav-section{padding:6px 0}
+.nav-sec-lbl{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase;padding:4px 16px;margin-top:6px}
+.nav-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.6);font-family:'DM Sans',sans-serif;font-size:13px;text-align:left;transition:background .15s,color .15s}
+.nav-btn:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-btn.active{background:rgba(255,255,255,.12);color:#fff}
+.nav-btn svg{opacity:.75;flex-shrink:0}.nav-btn.active svg{opacity:1}
+.sb-footer{margin-top:auto;padding:12px 14px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-footer p{font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.sb-footer select{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;padding:6px 8px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;outline:none}
+.sb-footer select option{background:#0E2438;color:#fff}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:11px 26px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:12px}
+.topbar h2{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;white-space:nowrap}
+.topbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.content{padding:22px 26px;flex:1}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;line-height:1}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-dark)}
+.btn-ghost{background:transparent;border:1px solid var(--border-strong);color:var(--text)}.btn-ghost:hover{background:var(--surface2)}
+.btn-danger{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
+.btn-gold{background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold)}
+.btn-sm{padding:4px 9px;font-size:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.card-hd{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-hd h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:600}
+.card-bd{padding:16px 18px}
+.mb-16{margin-bottom:16px}.mb-12{margin-bottom:12px}.mt-12{margin-top:12px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--bg);padding:8px 13px;text-align:left;font-size:10.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--bg)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.b-blue{background:var(--navy-pale);color:var(--navy)}.b-green{background:var(--green-bg);color:var(--green)}
+.b-gold{background:var(--gold-bg);color:var(--gold)}.b-red{background:var(--red-bg);color:var(--red)}
+.b-gray{background:var(--surface2);color:var(--text-muted)}.b-teal{background:var(--teal-bg);color:var(--teal)}
+.b-purple{background:var(--purple-bg);color:var(--purple)}
+.fg{margin-bottom:13px}.fg:last-child{margin-bottom:0}
+.flabel{display:block;font-size:11.5px;font-weight:500;color:var(--text-muted);margin-bottom:4px;letter-spacing:.02em}
+.fc{width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border .15s}
+.fc:focus{border-color:var(--navy-light)}
+select.fc{cursor:pointer}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--surface);border-radius:var(--r-xl);box-shadow:0 8px 48px rgba(0,0,0,.18);width:100%;max-height:90vh;overflow-y:auto}
+.modal-sm{max-width:420px}.modal-md{max-width:560px}.modal-lg{max-width:700px}
+.modal-hd{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-hd h3{font-family:'Syne',sans-serif;font-size:15px;font-weight:600}
+.modal-bd{padding:20px}
+.modal-ft{padding:13px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:var(--surface)}
+.close-btn{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:20px;line-height:1;padding:2px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.flex{display:flex}.ai-c{align-items:center}.gap-8{gap:8px}.gap-12{gap:12px}.fw{flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:15px}
+.stat-lbl{font-size:10.5px;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}
+.stat-val{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;line-height:1}
+.stat-sub{font-size:11.5px;color:var(--text-hint);margin-top:3px}
+.alert{padding:9px 13px;border-radius:var(--r);font-size:13px;margin-bottom:12px}
+.alert-info{background:var(--navy-pale);color:var(--navy);border:1px solid rgba(74,127,165,.25)}
+.alert-warn{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)}
+.alert-success{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.alert-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-page{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;gap:12px;color:var(--text-muted);font-size:13px}
+.empty{text-align:center;padding:44px 20px;color:var(--text-muted)}
+.empty p{font-size:13px}
+/* ── Calendar (day-wide, slots-as-rows) ── */
+.cal-outer{overflow:auto;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface);max-height:calc(100vh - 200px)}
+.cal-tbl{border-collapse:collapse;font-size:12px;width:max-content;table-layout:fixed}
+
+/* Top-left frozen corner */
+.cal-corner{background:var(--bg);border-right:2px solid var(--border-mid);border-bottom:2px solid var(--border-mid);
+  position:sticky;left:0;top:0;z-index:40;padding:8px 12px;vertical-align:bottom;min-width:160px;max-width:160px}
+.cal-corner small{font-size:10px;color:var(--text-hint);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+
+/* Day header cells */
+.cal-day-hd{background:var(--bg);border-bottom:2px solid var(--border-mid);border-right:1px solid var(--border-mid);
+  padding:7px 8px;text-align:center;position:sticky;top:0;z-index:20;min-width:200px;vertical-align:bottom}
+.cal-day-hd.is-today{background:#EBF3FB}
+.cal-day-name{font-size:9.5px;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1px}
+.cal-day-num{font-size:22px;font-weight:700;color:var(--text);font-family:'Syne',sans-serif;line-height:1}
+.cal-day-hd.is-today .cal-day-num{color:var(--navy)}
+.cal-day-month{font-size:9px;color:var(--text-hint);margin-top:1px}
+.cal-day-hd.is-today .cal-day-month{color:var(--navy-light)}
+
+/* Left lane header cells */
+.cal-lane-hd{background:var(--bg);border-right:2px solid var(--border-mid);border-bottom:1px solid var(--border);
+  position:sticky;left:0;z-index:10;vertical-align:middle;min-width:160px;max-width:160px;padding:0}
+.cal-lane-inner{padding:8px 12px}
+.cal-space-nm{font-size:11.5px;font-weight:700;color:var(--text);font-family:'Syne',sans-serif}
+.cal-lane-nm{font-size:11px;color:var(--text-muted);margin-top:1px}
+.cal-rates{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px}
+
+/* Slot sub-rows within each lane row — each day×lane intersection
+   is divided into N slot rows stacked vertically */
+.cal-slot-row{border-bottom:1px solid var(--border)}
+.cal-slot-row:last-child{border-bottom:none}
+.cal-slot-lh{background:var(--bg);border-right:2px solid var(--border-mid);position:sticky;left:0;z-index:10;
+  padding:5px 10px 5px 14px;min-width:160px;max-width:160px;vertical-align:middle}
+.cal-slot-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--text-muted);white-space:nowrap}
+
+/* Individual slot cells */
+.cal-cell{border-right:1px solid var(--border);vertical-align:top;padding:5px 6px;min-width:200px;
+  background:var(--surface);transition:background .12s;position:relative;min-height:52px}
+.cal-cell.is-free{cursor:pointer}
+.cal-cell.is-free:hover{background:var(--navy-pale)}
+.cal-cell.is-today-col{background:#FAFCFF}
+.cal-cell.is-today-col.is-free:hover{background:#EBF3FB}
+.cal-cell.is-blocked{background:#FFF5F5!important;cursor:default}
+
+/* Booking cards inside cells */
+.bc{border-radius:6px;padding:6px 8px;cursor:pointer;transition:filter .12s, box-shadow .12s;
+  font-size:11.5px;font-weight:500;line-height:1.4;position:relative;user-select:none}
+.bc:hover{filter:brightness(.93);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.bc.dragging{opacity:.4;transform:scale(.97)}
+.bc-team{font-weight:600;font-size:12px}
+.bc-group{font-size:10.5px;opacity:.8;margin-top:1px}
+.bc-cost{font-family:'DM Mono',monospace;font-size:10px;opacity:.75;margin-top:2px}
+.bc-drag-handle{position:absolute;top:4px;right:5px;opacity:.4;cursor:grab;font-size:11px;line-height:1}
+.bc:active .bc-drag-handle{cursor:grabbing}
+
+/* Drop target highlight */
+.cal-cell.drop-target{background:var(--navy-pale)!important;outline:2px dashed var(--navy-light)}
+
+/* Empty slot add button */
+.slot-add{display:none;position:absolute;inset:4px;border-radius:5px;background:transparent;border:1.5px dashed var(--border-strong);
+  color:var(--text-hint);font-size:11px;cursor:pointer;align-items:center;justify-content:center;gap:4px;transition:all .15s}
+.cal-cell.is-free:hover .slot-add{display:flex}
+.slot-add:hover{background:var(--navy-pale);border-color:var(--navy-light);color:var(--navy)}
+
+/* chip/legend swatches */
+.cp-pcss{background:#DBEAFE;color:#1E40AF}
+.cp-rowmark{background:#D1FAE5;color:#065F46}
+.cp-uofU{background:#FEF3C7;color:#92400E}
+.cp-alpine{background:#E0F2EE;color:#0F5E4E}
+.cp-summit{background:#EDE9FE;color:#4C1D95}
+.cp-swiss{background:#F1F5F9;color:#475569}
+.cp-other{background:#EDE9FE;color:#4C1D95}
+.cp-mine{background:#FFEDD5;color:#9A3412}
+.cp-blocked{background:#FEE2E2;color:#991B1B}
+.cp-mine-card{background:#FFF7ED;color:#9A3412;border:1.5px solid rgba(154,58,18,.25)}
+.cp-other-card{background:#F5F3FF;color:#4C1D95;border:1.5px solid rgba(91,63,168,.2)}
+.cp-blocked-card{background:#FEF2F2;color:#991B1B;border:1.5px solid rgba(153,27,27,.2)}
+.cp-pcss-card{background:#EFF6FF;color:#1E40AF;border:1.5px solid rgba(30,64,175,.2)}
+.cp-rowmark-card{background:#F0FDF4;color:#065F46;border:1.5px solid rgba(6,95,70,.2)}
+.cp-uofU-card{background:#FFFBEB;color:#92400E;border:1.5px solid rgba(146,64,14,.2)}
+.cp-alpine-card{background:#ECFDF5;color:#0F5E4E;border:1.5px solid rgba(15,94,78,.2)}
+.cp-summit-card{background:#F5F3FF;color:#4C1D95;border:1.5px solid rgba(76,29,149,.2)}
+.cp-swiss-card{background:#F8FAFC;color:#475569;border:1.5px solid rgba(71,85,105,.2)}
+/* builder */
+.bl-sec{border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px}
+.bl-sec-hd{background:var(--bg);padding:10px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.bl-sec-hd h4{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
+.bl-item{padding:10px 15px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;background:var(--surface)}
+.bl-item:last-child{border-bottom:none}
+.bl-item-info strong{display:block;font-size:13px;font-weight:500}
+.bl-item-info small{font-size:11.5px;color:var(--text-muted)}
+.bl-actions{display:flex;gap:5px;flex-shrink:0}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+.mono{font-family:'DM Mono',monospace}.text-muted{color:var(--text-muted)}.text-sm{font-size:12px}.text-xs{font-size:11px}
+.hidden{display:none!important}
+#toast-root{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:#1A1916;color:#fff;padding:10px 16px;border-radius:var(--r);font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.15);animation:tIn .2s ease}
+.toast.success{background:var(--green)}.toast.error{background:var(--red)}.toast.warn{background:var(--gold)}
+@keyframes tIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-rings"><span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span><span class="ring r4"></span><span class="ring r5"></span></div>
+      <h1>Olympic Park<br>Lane Management</h1>
+      <p>Park City · Utah</p>
+    </div>
+    <div class="sb-user">
+      <span class="sb-user-label">Signed in as</span>
+      <span class="sb-user-name" id="sb-name">Administrator</span>
+      <span class="sb-user-team" id="sb-team-lbl"></span>
+    </div>
+    <div class="nav-section" id="nav-menu"></div>
+    <div class="sb-footer">
+      <p>Demo Role</p>
+      <select id="role-select">
+        <option value="admin">Administrator</option>
+        <option value="pcss">Team User — PCSS</option>
+        <option value="rowmark">Team User — Rowmark</option>
+        <option value="uofU">Team User — University of Utah</option>
+      </select>
+    </div>
+  </nav>
+  <div id="main">
+    <div class="topbar"><h2 id="page-title">Dashboard</h2><div class="topbar-right" id="topbar-right"></div></div>
+    <div class="content" id="content"><div class="loading-page"><div class="spinner"></div><span>Loading data…</span></div></div>
+  </div>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script>
+// ═══════════════════════════════════════
+// STORAGE (window.storage API or localStorage fallback)
+// ═══════════════════════════════════════
+const Store = (() => {
+  const PFX = 'oplm_';
+  const hasAPI = typeof window.storage !== 'undefined';
+  async function get(k) {
+    try {
+      if (hasAPI) { const r = await window.storage.get(PFX+k); return r ? JSON.parse(r.value) : null; }
+      const v = localStorage.getItem(PFX+k); return v ? JSON.parse(v) : null;
+    } catch { return null; }
+  }
+  async function set(k, v) {
+    try {
+      if (hasAPI) { await window.storage.set(PFX+k, JSON.stringify(v)); }
+      else { localStorage.setItem(PFX+k, JSON.stringify(v)); }
+    } catch(e) { console.error(e); }
+  }
+  return { get, set };
+})();
+
+// ═══════════════════════════════════════
+// SEED DATA
+// ═══════════════════════════════════════
+const SEED = {
+  teams:[
+    {id:'pcss',name:'PCSS',status:'Residential',active:true},
+    {id:'rowmark',name:'Rowmark',status:'Residential',active:true},
+    {id:'uofU',name:'University of Utah',status:'Residential',active:true},
+    {id:'alpine',name:'Alpine Club Denver',status:'Local',active:true},
+    {id:'summit',name:'Summit Ski Academy',status:'Out-of-State',active:true},
+    {id:'swiss',name:'Swiss National B',status:'International',active:true},
+  ],
+  groups:[
+    {id:'g1',teamId:'pcss',name:'U14 Boys'},{id:'g2',teamId:'pcss',name:'U16 Girls'},{id:'g3',teamId:'pcss',name:'Speed Group'},
+    {id:'g4',teamId:'rowmark',name:'Development'},{id:'g5',teamId:'rowmark',name:'Elite A'},
+    {id:'g6',teamId:'uofU',name:"Men's Team"},{id:'g7',teamId:'uofU',name:"Women's Team"},
+    {id:'g8',teamId:'alpine',name:'Senior Group'},{id:'g9',teamId:'summit',name:'Race Squad'},{id:'g10',teamId:'swiss',name:'Training Camp'},
+  ],
+  spaces:[
+    {id:'sp1',name:'Intermediate Hill',type:'Hill',season:'Winter',active:true},
+    {id:'sp2',name:'Training Pool',type:'Pool',season:'Summer',active:true},
+    {id:'sp3',name:'Jump Complex',type:'Hill',season:'Winter',active:true},
+  ],
+  lanes:[
+    {id:'l1',spaceId:'sp1',name:'Lane 1',rates:{Residential:50,Local:75,'Out-of-State':100,International:150}},
+    {id:'l2',spaceId:'sp1',name:'Lane 2',rates:{Residential:50,Local:75,'Out-of-State':100,International:150}},
+    {id:'l3',spaceId:'sp1',name:'Ramp A',rates:{Residential:60,Local:85,'Out-of-State':110,International:160}},
+    {id:'l4',spaceId:'sp2',name:'Pool Lane 1',rates:{Residential:40,Local:60,'Out-of-State':80,International:120}},
+    {id:'l5',spaceId:'sp2',name:'Pool Lane 2',rates:{Residential:40,Local:60,'Out-of-State':80,International:120}},
+    {id:'l6',spaceId:'sp3',name:'Jump 1',rates:{Residential:80,Local:110,'Out-of-State':140,International:200}},
+    {id:'l7',spaceId:'sp3',name:'Jump 2',rates:{Residential:80,Local:110,'Out-of-State':140,International:200}},
+  ],
+  timeSlots:[
+    {id:'ts1',spaceId:'sp1',label:'7am–9am',start:'07:00',end:'09:00'},
+    {id:'ts2',spaceId:'sp1',label:'9am–11am',start:'09:00',end:'11:00'},
+    {id:'ts3',spaceId:'sp1',label:'11am–1pm',start:'11:00',end:'13:00'},
+    {id:'ts4',spaceId:'sp1',label:'1pm–3pm',start:'13:00',end:'15:00'},
+    {id:'ts5',spaceId:'sp2',label:'6am–8am',start:'06:00',end:'08:00'},
+    {id:'ts6',spaceId:'sp2',label:'8am–10am',start:'08:00',end:'10:00'},
+    {id:'ts7',spaceId:'sp2',label:'2pm–4pm',start:'14:00',end:'16:00'},
+    {id:'ts8',spaceId:'sp3',label:'8am–10am',start:'08:00',end:'10:00'},
+    {id:'ts9',spaceId:'sp3',label:'10am–12pm',start:'10:00',end:'12:00'},
+  ],
+  bookings:[
+    {id:'b1',laneId:'l1',spaceId:'sp1',date:'2025-03-10',slotId:'ts1',teamId:'pcss',groupId:'g1',createdBy:'pcss',status:'Active',cost:50},
+    {id:'b2',laneId:'l2',spaceId:'sp1',date:'2025-03-10',slotId:'ts2',teamId:'rowmark',groupId:'g4',createdBy:'rowmark',status:'Active',cost:50},
+    {id:'b3',laneId:'l1',spaceId:'sp1',date:'2025-03-12',slotId:'ts1',teamId:'uofU',groupId:'g6',createdBy:'uofU',status:'Active',cost:50},
+    {id:'b4',laneId:'l3',spaceId:'sp1',date:'2025-03-13',slotId:'ts3',teamId:'alpine',groupId:'g8',createdBy:'alpine',status:'Active',cost:85},
+    {id:'b5',laneId:'l4',spaceId:'sp2',date:'2025-03-14',slotId:'ts5',teamId:'pcss',groupId:'g2',createdBy:'pcss',status:'Active',cost:40},
+    {id:'b6',laneId:'l6',spaceId:'sp3',date:'2025-03-17',slotId:'ts8',teamId:'rowmark',groupId:'g5',createdBy:'rowmark',status:'Active',cost:80},
+    {id:'b7',laneId:'l2',spaceId:'sp1',date:'2025-03-19',slotId:'ts4',teamId:null,groupId:null,createdBy:'admin',status:'Blocked',cost:0,reason:'Maintenance'},
+    {id:'b8',laneId:'l7',spaceId:'sp3',date:'2025-03-20',slotId:'ts9',teamId:'swiss',groupId:'g10',createdBy:'admin',status:'Active',cost:200},
+    {id:'b9',laneId:'l1',spaceId:'sp1',date:'2025-03-24',slotId:'ts2',teamId:'pcss',groupId:'g3',createdBy:'pcss',status:'Active',cost:50},
+    {id:'b10',laneId:'l5',spaceId:'sp2',date:'2025-03-25',slotId:'ts6',teamId:'summit',groupId:'g9',createdBy:'summit',status:'Active',cost:80},
+    {id:'b11',laneId:'l1',spaceId:'sp1',date:'2025-03-27',slotId:'ts1',teamId:'pcss',groupId:'g1',createdBy:'pcss',status:'Active',cost:50},
+    {id:'b12',laneId:'l3',spaceId:'sp1',date:'2025-03-27',slotId:'ts2',teamId:'rowmark',groupId:'g4',createdBy:'rowmark',status:'Active',cost:50},
+  ],
+  _seq:200
+};
+
+// ═══════════════════════════════════════
+// DB
+// ═══════════════════════════════════════
+let DB = {};
+const KEYS = ['teams','groups','spaces','lanes','timeSlots','bookings'];
+
+async function loadDB() {
+  let fresh = true;
+  for (const k of KEYS) {
+    const v = await Store.get(k);
+    if (v !== null) { DB[k] = v; fresh = false; }
+    else DB[k] = JSON.parse(JSON.stringify(SEED[k]));
+  }
+  const seq = await Store.get('_seq');
+  DB._seq = seq !== null ? seq : SEED._seq;
+  if (fresh) await flushAll();
+}
+
+async function flushAll() { for (const k of KEYS) await Store.set(k, DB[k]); await Store.set('_seq', DB._seq); }
+async function flush(...ks) { for (const k of ks) await Store.set(k, DB[k]); await Store.set('_seq', DB._seq); }
+function nid(prefix) { DB._seq++; return prefix + DB._seq; }
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const TODAY = '2025-03-27'; // demo anchor
+let S = {
+  role: 'admin',
+  page: 'dashboard',
+  ganttStart: new Date(2025, 2, 24),
+  ganttDays: 14,
+};
+const isAdmin = () => S.role === 'admin';
+const myId = () => isAdmin() ? null : S.role;
+const myTeam = () => DB.teams.find(t => t.id === myId());
+const canEdit = b => isAdmin() || b.teamId === myId();
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+const lk = {
+  team:id=>DB.teams.find(t=>t.id===id),
+  lane:id=>DB.lanes.find(l=>l.id===id),
+  space:id=>DB.spaces.find(s=>s.id===id),
+  slot:id=>DB.timeSlots.find(s=>s.id===id),
+  group:id=>DB.groups.find(g=>g.id===id),
+  teamNm:id=>{const t=DB.teams.find(t=>t.id===id);return t?t.name:'—'},
+  laneNm:id=>{const l=DB.lanes.find(l=>l.id===id);return l?l.name:'—'},
+  spaceNm:id=>{const s=DB.spaces.find(s=>s.id===id);return s?s.name:'—'},
+  slotLbl:id=>{const s=DB.timeSlots.find(s=>s.id===id);return s?s.label:'—'},
+  groupNm:id=>{const g=DB.groups.find(g=>g.id===id);return g?g.name:'—'},
+  cost:(laneId,teamId)=>{
+    const lane=DB.lanes.find(l=>l.id===laneId);const team=DB.teams.find(t=>t.id===teamId);
+    if(!lane||!team)return 0; return lane.rates[team.status]||0;
+  },
+};
+const f$=n=>'$'+Math.round(n).toLocaleString();
+function isoDate(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+
+// ═══════════════════════════════════════
+// ICONS
+// ═══════════════════════════════════════
+function ico(p,s=15){return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`}
+const I={
+  grid:()=>ico('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>'),
+  cal:()=>ico('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'),
+  list:()=>ico('<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>'),
+  map:()=>ico('<polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>'),
+  clock:()=>ico('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'),
+  users:()=>ico('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+  tag:()=>ico('<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>'),
+  doc:()=>ico('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'),
+  plus:()=>ico('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'),
+  x:()=>ico('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'),
+  edit:()=>ico('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>'),
+  trash:()=>ico('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'),
+  dl:()=>ico('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'),
+  block:()=>ico('<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>'),
+  cL:()=>ico('<polyline points="15 18 9 12 15 6"/>'),
+  cR:()=>ico('<polyline points="9 18 15 12 9 6"/>'),
+  check:()=>ico('<polyline points="20 6 9 17 4 12"/>'),
+  wrench:()=>ico('<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'),
+};
+
+// ═══════════════════════════════════════
+// BADGES / CHIPS
+// ═══════════════════════════════════════
+function teamBadge(id){
+  if(!id)return '<span class="badge b-red">Blocked</span>';
+  const t=DB.teams.find(t=>t.id===id);if(!t)return '';
+  const m={pcss:'b-blue',rowmark:'b-green',uofU:'b-gold',alpine:'b-teal',summit:'b-purple',swiss:'b-gray'};
+  return `<span class="badge ${m[id]||'b-gray'}">${t.name}</span>`;
+}
+function statusBadge(s){const m={Residential:'b-green',Local:'b-teal','Out-of-State':'b-gold',International:'b-purple'};return `<span class="badge ${m[s]||'b-gray'}">${s}</span>`}
+function bkBadge(s){return s==='Blocked'?'<span class="badge b-red">Blocked</span>':'<span class="badge b-green">Active</span>'}
+function chipCls(teamId){
+  if(!teamId)return 'cp-blocked';
+  const m={pcss:'cp-pcss',rowmark:'cp-rowmark',uofU:'cp-uofU',alpine:'cp-alpine',summit:'cp-summit',swiss:'cp-swiss'};
+  return m[teamId]||'cp-other';
+}
+function chipClsForMe(teamId){
+  if(!teamId)return 'cp-blocked';
+  if(teamId===myId())return 'cp-mine';
+  return 'cp-other';
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+function toast(msg,type='success'){
+  const root=document.getElementById('toast-root');
+  const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;root.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),350)},2600);
+}
+
+// ═══════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════
+function openModal(html){
+  const r=document.getElementById('modal-root');r.innerHTML=`<div class="modal-overlay" id="mo">${html}</div>`;
+  document.getElementById('mo').addEventListener('click',e=>{if(e.target.id==='mo')closeModal()});
+}
+function closeModal(){document.getElementById('modal-root').innerHTML=''}
+
+// ═══════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════
+const NAV_ADMIN=[
+  {k:'dashboard',lbl:'Dashboard',icon:I.grid},
+  {k:'calendar',lbl:'Gantt Calendar',icon:I.cal},
+  {k:'bookings',lbl:'All Bookings',icon:I.list},
+  {sec:'Admin'},
+  {k:'builder',lbl:'Space Builder',icon:I.wrench},
+  {k:'teams',lbl:'Teams',icon:I.users},
+  {k:'groups',lbl:'Groups',icon:I.tag},
+  {sec:'Reports'},
+  {k:'invoicing',lbl:'Invoicing',icon:I.doc},
+];
+const NAV_TEAM=[
+  {k:'dashboard',lbl:'Dashboard',icon:I.grid},
+  {k:'calendar',lbl:'Book a Lane',icon:I.cal},
+  {k:'mybookings',lbl:'My Bookings',icon:I.list},
+  {k:'groups',lbl:'My Groups',icon:I.tag},
+];
+
+function renderNav(){
+  const nav=isAdmin()?NAV_ADMIN:NAV_TEAM;
+  document.getElementById('nav-menu').innerHTML=nav.map(item=>{
+    if(item.sec)return `<div class="nav-sec-lbl" style="margin-top:8px">${item.sec}</div>`;
+    return `<button class="nav-btn${S.page===item.k?' active':''}" onclick="go('${item.k}')">${item.icon()}<span>${item.lbl}</span></button>`;
+  }).join('');
+}
+
+function go(page){S.page=page;renderNav();renderPage()}
+
+// ═══════════════════════════════════════
+// ROUTER
+// ═══════════════════════════════════════
+const TITLES={dashboard:'Dashboard',calendar:()=>isAdmin()?'Gantt Calendar':'Book a Lane',bookings:'All Bookings',mybookings:'My Bookings',builder:'Space & Lane Builder',teams:'Teams',groups:'Groups',invoicing:'Invoicing & Reports'};
+function renderPage(){
+  const t=TITLES[S.page];
+  document.getElementById('page-title').textContent=typeof t==='function'?t():(t||S.page);
+  document.getElementById('topbar-right').innerHTML='';
+  document.getElementById('content').style.padding=''; // reset; calendar overrides it
+  ({dashboard:pgDash,calendar:pgCalendar,bookings:pgBookings,mybookings:pgMyBookings,builder:pgBuilder,teams:pgTeams,groups:pgGroups,invoicing:pgInvoicing}[S.page]||pgDash)();
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+function pgDash(){
+  const C=document.getElementById('content');
+  const me=myId();
+  const active=DB.bookings.filter(b=>b.status==='Active');
+  const mine=isAdmin()?active:active.filter(b=>b.teamId===me);
+  const myRev=mine.reduce((s,b)=>s+b.cost,0);
+
+  C.innerHTML=`
+  <div class="${isAdmin()?'g4':'g3'} mb-16">
+    <div class="stat"><div class="stat-lbl">${isAdmin()?'Total':'My'} Active Bookings</div><div class="stat-val">${mine.length}</div><div class="stat-sub">reservations</div></div>
+    <div class="stat"><div class="stat-lbl">${isAdmin()?'Total Revenue':'My Spend'}</div><div class="stat-val mono">${f$(myRev)}</div><div class="stat-sub">all time</div></div>
+    ${isAdmin()?`<div class="stat"><div class="stat-lbl">Blocked Slots</div><div class="stat-val">${DB.bookings.filter(b=>b.status==='Blocked').length}</div><div class="stat-sub">admin blocks</div></div>
+    <div class="stat"><div class="stat-lbl">Active Teams</div><div class="stat-val">${DB.teams.filter(t=>t.active).length}</div><div class="stat-sub">${DB.spaces.length} spaces · ${DB.lanes.length} lanes</div></div>`
+    :`<div class="stat"><div class="stat-lbl">My Groups</div><div class="stat-val">${DB.groups.filter(g=>g.teamId===me).length}</div><div class="stat-sub">registered</div></div>`}
+  </div>
+  <div class="${isAdmin()?'g2':''}">
+    <div class="card mb-16">
+      <div class="card-hd"><h3>Recent Bookings</h3><button class="btn btn-ghost btn-sm" onclick="go('${isAdmin()?'bookings':'mybookings'}')">${I.list()} View all</button></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Date</th><th>Space/Lane</th><th>Slot</th>${isAdmin()?'<th>Team</th>':''}<th>Group</th><th>Status</th><th>Cost</th></tr></thead>
+        <tbody>${[...(isAdmin()?DB.bookings:mine)].reverse().slice(0,6).map(b=>`<tr>
+          <td class="mono text-sm">${b.date}</td>
+          <td>${lk.spaceNm(b.spaceId)} <span class="text-muted text-xs">/ ${lk.laneNm(b.laneId)}</span></td>
+          <td>${lk.slotLbl(b.slotId)}</td>
+          ${isAdmin()?`<td>${teamBadge(b.teamId)}</td>`:''}
+          <td>${b.groupId?lk.groupNm(b.groupId):(b.reason||'—')}</td>
+          <td>${bkBadge(b.status)}</td><td class="mono">${f$(b.cost)}</td>
+        </tr>`).join('')||`<tr><td colspan="7"><div class="empty"><p>No bookings yet.</p></div></td></tr>`}
+        </tbody>
+      </table></div>
+    </div>
+    ${isAdmin()?`<div class="card mb-16">
+      <div class="card-hd"><h3>Teams Summary</h3></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Team</th><th>Status</th><th>Bookings</th><th>Revenue</th></tr></thead>
+        <tbody>${DB.teams.map(t=>{const tb=active.filter(b=>b.teamId===t.id);const rev=tb.reduce((s,b)=>s+b.cost,0);
+          return `<tr><td><strong>${t.name}</strong></td><td>${statusBadge(t.status)}</td><td>${tb.length}</td><td class="mono">${f$(rev)}</td></tr>`;}).join('')}
+        </tbody>
+      </table></div>
+    </div>`:''}
+  </div>`;
+}
+
+// ═══════════════════════════════════════
+// CALENDAR  (days = columns, lanes × slots = rows)
+// ═══════════════════════════════════════
+function pgCalendar(){
+  const tr=document.getElementById('topbar-right');
+  tr.innerHTML=`
+    <button class="btn btn-ghost btn-sm" onclick="shiftCal(-7)">${I.cL()} Prev week</button>
+    <span class="text-sm text-muted" id="cal-range" style="min-width:200px;text-align:center"></span>
+    <button class="btn btn-ghost btn-sm" onclick="shiftCal(7)">Next week ${I.cR()}</button>
+    <button class="btn btn-primary" onclick="mBooking()">${I.plus()} New Booking</button>`;
+  buildCal();
+}
+function shiftCal(d){S.ganttStart=addDays(S.ganttStart,d);buildCal()}
+
+function cardCls(teamId){
+  if(!teamId)return 'cp-blocked-card';
+  if(!isAdmin()&&teamId===myId())return 'cp-mine-card';
+  const m={pcss:'cp-pcss-card',rowmark:'cp-rowmark-card',uofU:'cp-uofU-card',alpine:'cp-alpine-card',summit:'cp-summit-card',swiss:'cp-swiss-card'};
+  return m[teamId]||'cp-other-card';
+}
+function swatchCls(teamId){
+  const m={pcss:'cp-pcss',rowmark:'cp-rowmark',uofU:'cp-uofU',alpine:'cp-alpine',summit:'cp-summit',swiss:'cp-swiss'};
+  return m[teamId]||'cp-other';
+}
+
+// Drag state
+let DG={bkId:null,fromLane:null,fromDate:null,fromSlot:null};
+
+function buildCal(){
+  const NUM=7; // one week
+  const days=Array.from({length:NUM},(_,i)=>addDays(S.ganttStart,i));
+  const rl=document.getElementById('cal-range');
+  if(rl){
+    const from=days[0].toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    const to=days[NUM-1].toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    rl.textContent=`${from} – ${to}`;
+  }
+
+  // All active spaces and their lanes
+  const spaces=DB.spaces.filter(sp=>sp.active);
+  if(!spaces.length){
+    document.getElementById('content').innerHTML=`<div class="empty"><p>No spaces configured.</p><button class="btn btn-primary" style="margin-top:12px" onclick="go('builder')">Open Builder</button></div>`;
+    return;
+  }
+
+  // Legend
+  const legendItems=isAdmin()
+    ?[['cp-pcss','PCSS'],['cp-rowmark','Rowmark'],['cp-uofU','Univ. Utah'],['cp-alpine','Alpine'],['cp-summit','Summit'],['cp-swiss','Swiss'],['cp-blocked','Blocked']]
+    :[['cp-mine','My Team'],['cp-other','Other Teams'],['cp-blocked','Blocked']];
+  const legend=legendItems.map(([cls,lbl])=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted)">
+    <span style="display:inline-block;width:20px;height:10px;border-radius:3px" class="${cls}"></span>${lbl}</span>`).join('');
+
+  // Day header row
+  const dayHds=days.map(d=>{
+    const isT=isoDate(d)===TODAY;
+    return `<th class="cal-day-hd${isT?' is-today':''}">
+      <div class="cal-day-name">${d.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</div>
+      <div class="cal-day-num">${d.getDate()}</div>
+      <div class="cal-day-month">${d.toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div>
+    </th>`;
+  }).join('');
+
+  // Body: for each space, for each lane, for each slot → one <tr> that spans all days
+  let bodyRows='';
+  spaces.forEach(sp=>{
+    const lanes=DB.lanes.filter(l=>l.spaceId===sp.id);
+    const slots=DB.timeSlots.filter(s=>s.spaceId===sp.id);
+    if(!lanes.length)return;
+
+    lanes.forEach((lane,li)=>{
+      const rateInfo=isAdmin()?`<div class="cal-rates">${Object.entries(lane.rates).map(([t,r])=>`<span class="badge b-gray" style="font-size:9px;padding:1px 5px;font-family:'DM Mono',monospace">${t.charAt(0)}:${f$(r)}</span>`).join('')}</div>`:'';
+
+      if(!slots.length){
+        // Lane header + one empty row
+        bodyRows+=`<tr>
+          <td class="cal-lane-hd" style="border-bottom:2px solid var(--border-mid)">
+            <div class="cal-lane-inner">
+              <div class="cal-space-nm">${sp.name}</div>
+              <div class="cal-lane-nm">${lane.name}</div>${rateInfo}
+            </div>
+          </td>
+          ${days.map(d=>{
+            const ds=isoDate(d);const isT=ds===TODAY;
+            return `<td class="cal-cell is-free${isT?' is-today-col':''}" data-lane="${lane.id}" data-date="${ds}" data-slot="">
+              <button class="slot-add" onclick="mBooking('${lane.id}','${ds}')">${I.plus()} Book</button>
+            </td>`;
+          }).join('')}
+        </tr>`;
+        return;
+      }
+
+      // For each slot, emit one row
+      slots.forEach((slot,si)=>{
+        const isLastSlot=si===slots.length-1;
+        const isLastLane=li===lanes.length-1;
+        const bottomBorder=isLastSlot?'border-bottom:2px solid var(--border-mid)':'';
+
+        // Left header: show lane info only on first slot row of this lane
+        const laneHd=si===0
+          ?`<td class="cal-lane-hd" rowspan="${slots.length}" style="${isLastLane&&isLastSlot?'border-bottom:2px solid var(--border-mid)':''}">
+              <div class="cal-lane-inner">
+                <div class="cal-space-nm">${sp.name}</div>
+                <div class="cal-lane-nm">${lane.name}</div>${rateInfo}
+              </div>
+            </td>`
+          :''; // already spanned
+
+        // Slot label on the left — sticky label column within the lane group
+        const slotLhd=`<td class="cal-slot-lh" style="${bottomBorder}">
+          <div class="cal-slot-label">${slot.label}</div>
+        </td>`;
+
+        const dayCells=days.map(d=>{
+          const ds=isoDate(d);const isT=ds===TODAY;
+          const bk=DB.bookings.find(b=>b.laneId===lane.id&&b.date===ds&&b.slotId===slot.id);
+
+          if(bk){
+            const isBlocked=bk.status==='Blocked';
+            const editable=canEdit(bk);
+            const cls=cardCls(bk.teamId);
+            const teamNm=bk.teamId?lk.teamNm(bk.teamId):(bk.reason||'Blocked');
+            const grpNm=bk.groupId?lk.groupNm(bk.groupId):'';
+            const drag=editable&&!isBlocked?`draggable="true" ondragstart="dStart(event,'${bk.id}','${lane.id}','${ds}','${slot.id}')" ondragend="dEnd(event)"`:'';
+            return `<td class="cal-cell is-today-col-${isT}" style="${bottomBorder};${isT?'background:#FAFCFF':''}" data-lane="${lane.id}" data-date="${ds}" data-slot="${slot.id}"
+              ondragover="dOver(event)" ondragenter="dEnter(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'${lane.id}','${ds}','${slot.id}')">
+              <div class="bc ${cls}" ${drag} onclick="mViewBk('${bk.id}')">
+                ${editable&&!isBlocked?`<span class="bc-drag-handle" title="Drag to move">⠿</span>`:''}
+                <div class="bc-team">${isBlocked?'🚫 Blocked':teamNm}</div>
+                ${grpNm?`<div class="bc-group">${grpNm}</div>`:''}
+                <div class="bc-cost">${isBlocked?(bk.reason||''):`${f$(bk.cost)}/session`}</div>
+              </div>
+            </td>`;
+          }
+
+          // Empty cell
+          return `<td class="cal-cell is-free${isT?' is-today-col':''}" style="${bottomBorder}" data-lane="${lane.id}" data-date="${ds}" data-slot="${slot.id}"
+            ondragover="dOver(event)" ondragenter="dEnter(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'${lane.id}','${ds}','${slot.id}')">
+            <button class="slot-add" onclick="mBooking('${lane.id}','${ds}','${slot.id}')">${I.plus()} Book</button>
+          </td>`;
+        }).join('');
+
+        bodyRows+=`<tr>${si===0?laneHd:''}${slotLhd}${dayCells}</tr>`;
+      });
+    });
+  });
+
+  const C=document.getElementById('content');
+  // Adjust content padding for calendar full-bleed feel
+  C.style.padding='14px 18px';
+  C.innerHTML=`
+    <div class="flex gap-12 mb-12 fw" style="align-items:center">${legend}
+      <span style="margin-left:auto;font-size:11px;color:var(--text-hint)">Click to book · Drag booking card to reschedule</span>
+    </div>
+    <div class="cal-outer" id="cal-outer">
+      <table class="cal-tbl" id="cal-tbl">
+        <thead><tr>
+          <th class="cal-corner" colspan="2"><small>Space / Lane / Slot</small></th>
+          ${dayHds}
+        </tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── Drag & Drop ──
+function dStart(e,bkId,laneId,date,slotId){
+  DG={bkId,fromLane:laneId,fromDate:date,fromSlot:slotId};
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain',bkId);
+  setTimeout(()=>e.target.closest('.bc')?.classList.add('dragging'),0);
+}
+function dEnd(e){
+  e.target.closest('.bc')?.classList.remove('dragging');
+  document.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'));
+}
+function dOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';}
+function dEnter(e){const td=e.currentTarget;if(td.classList.contains('is-free'))td.classList.add('drop-target');}
+function dLeave(e){e.currentTarget.classList.remove('drop-target');}
+async function dDrop(e,toLaneId,toDate,toSlotId){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drop-target');
+  if(!DG.bkId)return;
+  if(toLaneId===DG.fromLane&&toDate===DG.fromDate&&toSlotId===DG.fromSlot)return;
+
+  // Check for conflict at destination
+  const conflict=DB.bookings.find(b=>b.id!==DG.bkId&&b.laneId===toLaneId&&b.date===toDate&&b.slotId===toSlotId);
+  if(conflict){toast('That slot is already taken!','error');return;}
+
+  const bk=DB.bookings.find(b=>b.id===DG.bkId);
+  if(!bk||!canEdit(bk))return;
+
+  // Update lane, date, slot; recalculate cost if lane changed
+  const toLane=lk.lane(toLaneId);
+  const toSpace=toLane?lk.space(toLane.spaceId):null;
+  bk.laneId=toLaneId;
+  bk.spaceId=toLane?.spaceId||bk.spaceId;
+  bk.date=toDate;
+  bk.slotId=toSlotId;
+  if(bk.teamId&&toLane){bk.cost=lk.cost(toLaneId,bk.teamId);}
+
+  await flush('bookings');
+  toast(`Booking moved to ${toDate} · ${lk.slotLbl(toSlotId)}`);
+  buildCal();
+  DG={bkId:null};
+}
+
+// ═══════════════════════════════════════
+// MODAL: VIEW BOOKING
+// ═══════════════════════════════════════
+function mViewBk(id){
+  const b=DB.bookings.find(bk=>bk.id===id);if(!b)return;
+  const editable=canEdit(b);
+  openModal(`<div class="modal modal-sm">
+    <div class="modal-hd"><h3>Booking Detail</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div>
+    <div class="modal-bd">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13px;align-items:center">
+        <span class="text-muted">Status</span><span>${bkBadge(b.status)}</span>
+        <span class="text-muted">Date</span><span class="mono">${b.date}</span>
+        <span class="text-muted">Space</span><span>${lk.spaceNm(b.spaceId)}</span>
+        <span class="text-muted">Lane</span><span>${lk.laneNm(b.laneId)}</span>
+        <span class="text-muted">Time Slot</span><span>${lk.slotLbl(b.slotId)}</span>
+        <span class="text-muted">Team</span><span>${teamBadge(b.teamId)}</span>
+        <span class="text-muted">Group</span><span>${b.groupId?lk.groupNm(b.groupId):(b.reason||'—')}</span>
+        <span class="text-muted">Cost</span><span class="mono">${f$(b.cost)}</span>
+      </div>
+      ${editable?`<div class="divider"></div><button class="btn btn-danger" onclick="delBk('${b.id}')">${I.trash()} Cancel Booking</button>`
+        :'<div class="alert alert-info mt-12" style="margin-top:12px">You can view but not edit bookings by other teams.</div>'}
+    </div>
+  </div>`);
+}
+async function delBk(id){
+  if(!confirm('Cancel this booking?'))return;
+  DB.bookings=DB.bookings.filter(b=>b.id!==id);await flush('bookings');
+  closeModal();toast('Booking cancelled.');renderPage();
+}
+
+// ═══════════════════════════════════════
+// MODAL: NEW BOOKING
+// ═══════════════════════════════════════
+function mBooking(preLane, preDate, preSlot){
+  const spaces=DB.spaces.filter(s=>s.active);
+  const me=myId();
+  const teamOpts=isAdmin()
+    ?DB.teams.filter(t=>t.active).map(t=>`<option value="${t.id}">${t.name}</option>`).join('')
+    :`<option value="${me}">${myTeam()?.name||''}</option>`;
+  const preLaneObj=preLane?lk.lane(preLane):null;
+  const preSpaceId=preLaneObj?preLaneObj.spaceId:'';
+
+  openModal(`<div class="modal modal-md">
+    <div class="modal-hd"><h3>New Booking</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div>
+    <div class="modal-bd">
+      <div class="g2">
+        <div class="fg"><label class="flabel">Space</label>
+          <select class="fc" id="nb-sp" onchange="nbSp()">
+            <option value="">Select space…</option>
+            ${spaces.map(s=>`<option value="${s.id}"${s.id===preSpaceId?' selected':''}>${s.name}</option>`).join('')}
+          </select></div>
+        <div class="fg"><label class="flabel">Lane</label>
+          <select class="fc" id="nb-lane" onchange="nbCost()"><option value="">Select lane…</option></select></div>
+      </div>
+      <div class="g2">
+        <div class="fg"><label class="flabel">Date</label>
+          <input type="date" class="fc" id="nb-date" value="${preDate||TODAY}" onchange="nbConflict()"></div>
+        <div class="fg"><label class="flabel">Time Slot</label>
+          <select class="fc" id="nb-slot" onchange="nbConflict()"><option value="">Select slot…</option></select></div>
+      </div>
+      <div class="g2">
+        <div class="fg"><label class="flabel">Team</label>
+          <select class="fc" id="nb-team" onchange="nbTeam()" ${!isAdmin()?'disabled':''}>
+            <option value="">Select team…</option>${teamOpts}</select></div>
+        <div class="fg"><label class="flabel">Group</label>
+          <select class="fc" id="nb-grp"><option value="">Select group…</option></select></div>
+      </div>
+      ${isAdmin()?`<div class="fg" style="margin-bottom:6px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="nb-blocked" onchange="nbBlock(this)" style="width:15px;height:15px;accent-color:var(--navy)">
+          Mark as Blocked (admin only — maintenance/event)
+        </label>
+      </div>
+      <div class="fg hidden" id="nb-reason-g"><label class="flabel">Reason</label>
+        <input class="fc" id="nb-reason" placeholder="e.g. Maintenance"></div>`:''}
+      <div id="nb-cost-p" class="alert alert-info hidden">Estimated cost: <strong id="nb-cost-v" class="mono"></strong></div>
+      <div id="nb-conflict-p" class="alert alert-warn hidden">This lane/slot is already booked on that date.</div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitBk()">${I.check()} Book Lane</button>
+    </div>
+  </div>`);
+
+  if(preSpaceId) nbSp(preLane, preSlot);
+  if(!isAdmin()){const t=document.getElementById('nb-team');if(t){t.value=me;nbTeam();}}
+}
+
+function nbSp(preLane, preSlot){
+  const spId=document.getElementById('nb-sp').value;
+  const laneEl=document.getElementById('nb-lane');
+  const slotEl=document.getElementById('nb-slot');
+  const lanes=DB.lanes.filter(l=>l.spaceId===spId);
+  const slots=DB.timeSlots.filter(s=>s.spaceId===spId);
+  laneEl.innerHTML='<option value="">Select lane…</option>'+lanes.map(l=>`<option value="${l.id}"${l.id===preLane?' selected':''}>${l.name}</option>`).join('');
+  slotEl.innerHTML='<option value="">Select slot…</option>'+slots.map(s=>`<option value="${s.id}"${s.id===preSlot?' selected':''}>${s.label}</option>`).join('');
+  if(preLane)laneEl.value=preLane;
+  if(preSlot)slotEl.value=preSlot;
+  nbCost();nbConflict();
+}
+function nbTeam(){
+  const tid=document.getElementById('nb-team').value;
+  const gEl=document.getElementById('nb-grp');
+  gEl.innerHTML='<option value="">Select group…</option>'+DB.groups.filter(g=>g.teamId===tid).map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+  nbCost();
+}
+function nbBlock(cb){
+  document.getElementById('nb-reason-g').classList.toggle('hidden',!cb.checked);
+  nbCost();
+}
+function nbCost(){
+  const laneId=document.getElementById('nb-lane').value;
+  const teamId=document.getElementById('nb-team').value;
+  const isBlocked=document.getElementById('nb-blocked')?.checked;
+  const p=document.getElementById('nb-cost-p');const v=document.getElementById('nb-cost-v');
+  if(!laneId||!teamId||isBlocked){p&&p.classList.add('hidden');return;}
+  const cost=lk.cost(laneId,teamId);const team=lk.team(teamId);
+  v.textContent=`${f$(cost)} / session (${team?.status} rate)`;p.classList.remove('hidden');
+}
+function nbConflict(){
+  const laneId=document.getElementById('nb-lane').value;
+  const date=document.getElementById('nb-date').value;
+  const slotId=document.getElementById('nb-slot').value;
+  const el=document.getElementById('nb-conflict-p');if(!el)return;
+  const conflict=laneId&&date&&slotId&&DB.bookings.find(b=>b.laneId===laneId&&b.date===date&&b.slotId===slotId);
+  el.classList.toggle('hidden',!conflict);
+}
+async function submitBk(){
+  const spaceId=document.getElementById('nb-sp').value;
+  const laneId=document.getElementById('nb-lane').value;
+  const date=document.getElementById('nb-date').value;
+  const slotId=document.getElementById('nb-slot').value;
+  const teamId=document.getElementById('nb-team').value;
+  const groupId=document.getElementById('nb-grp').value;
+  const isBlocked=document.getElementById('nb-blocked')?.checked||false;
+  const reason=document.getElementById('nb-reason')?.value||'';
+  if(!spaceId||!laneId||!date||!slotId||(!isBlocked&&!teamId)){toast('Please fill in all required fields.','warn');return;}
+  if(DB.bookings.find(b=>b.laneId===laneId&&b.date===date&&b.slotId===slotId)){toast('This slot is already booked!','error');return;}
+  const cost=(!isBlocked&&teamId)?lk.cost(laneId,teamId):0;
+  DB.bookings.push({
+    id:nid('b'),laneId,spaceId,date,slotId,
+    teamId:isBlocked?null:teamId,
+    groupId:groupId||null,
+    createdBy:isAdmin()?'admin':myId(),
+    status:isBlocked?'Blocked':'Active',
+    cost,reason:isBlocked?reason:undefined
+  });
+  await flush('bookings');closeModal();toast('Booking created!');renderPage();
+}
+
+// ═══════════════════════════════════════
+// BOOKINGS PAGE
+// ═══════════════════════════════════════
+function pgBookings(){
+  document.getElementById('topbar-right').innerHTML=`<button class="btn btn-primary" onclick="mBooking()">${I.plus()} New Booking</button>`;
+  const C=document.getElementById('content');
+  C.innerHTML=`
+  <div class="card mb-16">
+    <div class="card-hd"><h3>Filters</h3></div>
+    <div class="card-bd"><div class="flex gap-8 fw ai-c">
+      <div><label class="flabel">Team</label><select class="fc" id="f-team" onchange="applyBkF()" style="width:160px">
+        <option value="">All Teams</option>${DB.teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+      <div><label class="flabel">Space</label><select class="fc" id="f-space" onchange="applyBkF()" style="width:160px">
+        <option value="">All Spaces</option>${DB.spaces.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+      <div><label class="flabel">Status</label><select class="fc" id="f-status" onchange="applyBkF()" style="width:120px">
+        <option value="">All</option><option>Active</option><option>Blocked</option></select></div>
+    </div></div>
+  </div>
+  <div class="card" id="bk-card">${bkTable(DB.bookings)}</div>`;
+}
+function applyBkF(){
+  let bk=[...DB.bookings];
+  const t=document.getElementById('f-team').value;const sp=document.getElementById('f-space').value;const st=document.getElementById('f-status').value;
+  if(t)bk=bk.filter(b=>b.teamId===t);if(sp)bk=bk.filter(b=>b.spaceId===sp);if(st)bk=bk.filter(b=>b.status===st);
+  document.getElementById('bk-card').innerHTML=bkTable(bk);
+}
+function bkTable(bks){
+  return `<div class="tbl-wrap"><table>
+    <thead><tr><th>Date</th><th>Space</th><th>Lane</th><th>Slot</th><th>Team</th><th>Group</th><th>Status</th><th>Cost</th>${isAdmin()?'<th></th>':''}</tr></thead>
+    <tbody>${bks.length===0?`<tr><td colspan="9"><div class="empty"><p>No bookings match.</p></div></td></tr>`:
+      bks.map(b=>`<tr style="cursor:pointer" onclick="mViewBk('${b.id}')">
+        <td class="mono text-sm">${b.date}</td><td>${lk.spaceNm(b.spaceId)}</td><td>${lk.laneNm(b.laneId)}</td>
+        <td>${lk.slotLbl(b.slotId)}</td><td>${teamBadge(b.teamId)}</td>
+        <td>${b.groupId?lk.groupNm(b.groupId):(b.reason||'—')}</td>
+        <td>${bkBadge(b.status)}</td><td class="mono">${f$(b.cost)}</td>
+        ${isAdmin()?`<td onclick="event.stopPropagation()"><button class="btn btn-danger btn-sm" onclick="delBkRow('${b.id}')">${I.trash()}</button></td>`:''}
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+async function delBkRow(id){if(!confirm('Cancel booking?'))return;DB.bookings=DB.bookings.filter(b=>b.id!==id);await flush('bookings');toast('Cancelled.');pgBookings();}
+
+// ═══════════════════════════════════════
+// MY BOOKINGS
+// ═══════════════════════════════════════
+function pgMyBookings(){
+  document.getElementById('topbar-right').innerHTML=`<button class="btn btn-primary" onclick="mBooking()">${I.plus()} New Booking</button>`;
+  const bks=DB.bookings.filter(b=>b.teamId===myId());
+  document.getElementById('content').innerHTML=`<div class="card">${bkTable(bks)}</div>`;
+}
+
+// ═══════════════════════════════════════
+// BUILDER (Admin)
+// ═══════════════════════════════════════
+function pgBuilder(){
+  document.getElementById('topbar-right').innerHTML=`
+    <button class="btn btn-ghost btn-sm" onclick="mAddSlot()">${I.clock()} Add Time Slot</button>
+    <button class="btn btn-ghost btn-sm" onclick="mAddLane()">${I.plus()} Add Lane</button>
+    <button class="btn btn-primary" onclick="mAddSpace()">${I.plus()} Add Space</button>`;
+  const C=document.getElementById('content');
+  if(DB.spaces.length===0){C.innerHTML=`<div class="empty"><p>No spaces yet.</p><button class="btn btn-primary" style="margin-top:12px" onclick="mAddSpace()">Add First Space</button></div>`;return;}
+
+  C.innerHTML=DB.spaces.map(sp=>{
+    const lanes=DB.lanes.filter(l=>l.spaceId===sp.id);
+    const slots=DB.timeSlots.filter(s=>s.spaceId===sp.id);
+    const lanesHtml=lanes.map(l=>`<div class="bl-item">
+      <div class="bl-item-info">
+        <strong>${l.name}</strong>
+        <small>${Object.entries(l.rates).map(([t,r])=>`${t}: ${f$(r)}`).join(' · ')}</small>
+      </div>
+      <div class="bl-actions">
+        <button class="btn btn-ghost btn-sm" onclick="mEditLane('${l.id}')">${I.edit()}</button>
+        <button class="btn btn-danger btn-sm" onclick="dLane('${l.id}')">${I.trash()}</button>
+      </div>
+    </div>`).join('')||`<div class="bl-item"><span class="text-muted text-sm">No lanes yet.</span><button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="mAddLane('${sp.id}')">${I.plus()} Add Lane</button></div>`;
+
+    const slotsHtml=slots.map(s=>`<div class="bl-item">
+      <div class="bl-item-info"><strong>${s.label}</strong><small class="mono">${s.start} – ${s.end}</small></div>
+      <div class="bl-actions"><button class="btn btn-danger btn-sm" onclick="dSlot('${s.id}')">${I.trash()}</button></div>
+    </div>`).join('')||`<div class="bl-item"><span class="text-muted text-sm">No slots yet.</span><button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="mAddSlot('${sp.id}')">${I.clock()} Add Slot</button></div>`;
+
+    return `<div class="bl-sec">
+      <div class="bl-sec-hd">
+        <h4>${I.map()} ${sp.name} <span class="badge ${sp.active?'b-green':'b-gray'}" style="font-size:10px">${sp.type} · ${sp.season}</span></h4>
+        <div class="flex gap-8">
+          <button class="btn btn-ghost btn-sm" onclick="mEditSpace('${sp.id}')">${I.edit()}</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleSp('${sp.id}')">${sp.active?'Archive':'Restore'}</button>
+          <button class="btn btn-ghost btn-sm" onclick="mAddLane('${sp.id}')">${I.plus()} Lane</button>
+          <button class="btn btn-ghost btn-sm" onclick="mAddSlot('${sp.id}')">${I.clock()} Slot</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr">
+        <div>
+          <div style="background:var(--bg);padding:7px 15px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-size:10px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Lanes</div>
+          ${lanesHtml}
+        </div>
+        <div>
+          <div style="background:var(--bg);padding:7px 15px;border-bottom:1px solid var(--border);font-size:10px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Time Slots</div>
+          ${slotsHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// space CRUD
+function mAddSpace(){openModal(`<div class="modal modal-sm">
+  <div class="modal-hd"><h3>Add Space</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div>
+  <div class="modal-bd">
+    <div class="fg"><label class="flabel">Name</label><input class="fc" id="sp-n" placeholder="e.g. Intermediate Hill"></div>
+    <div class="g2">
+      <div class="fg"><label class="flabel">Type</label><select class="fc" id="sp-t"><option>Hill</option><option>Pool</option><option>Track</option><option>Other</option></select></div>
+      <div class="fg"><label class="flabel">Season</label><select class="fc" id="sp-s"><option>Winter</option><option>Summer</option><option>Year-round</option></select></div>
+    </div>
+  </div>
+  <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSpace()">Save</button></div>
+</div>`);}
+async function saveSpace(){
+  const n=document.getElementById('sp-n').value.trim();if(!n){toast('Name required','warn');return;}
+  DB.spaces.push({id:nid('sp'),name:n,type:document.getElementById('sp-t').value,season:document.getElementById('sp-s').value,active:true});
+  await flush('spaces');closeModal();toast('Space added!');renderPage();
+}
+function mEditSpace(id){
+  const sp=DB.spaces.find(s=>s.id===id);
+  openModal(`<div class="modal modal-sm">
+    <div class="modal-hd"><h3>Edit Space</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div>
+    <div class="modal-bd">
+      <div class="fg"><label class="flabel">Name</label><input class="fc" id="sp-n" value="${sp.name}"></div>
+      <div class="g2">
+        <div class="fg"><label class="flabel">Type</label><select class="fc" id="sp-t">${['Hill','Pool','Track','Other'].map(t=>`<option${t===sp.type?' selected':''}>${t}</option>`).join('')}</select></div>
+        <div class="fg"><label class="flabel">Season</label><select class="fc" id="sp-s">${['Winter','Summer','Year-round'].map(t=>`<option${t===sp.season?' selected':''}>${t}</option>`).join('')}</select></div>
+      </div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="updSpace('${id}')">Save</button></div>
+  </div>`);
+}
+async function updSpace(id){const sp=DB.spaces.find(s=>s.id===id);sp.name=document.getElementById('sp-n').value.trim()||sp.name;sp.type=document.getElementById('sp-t').value;sp.season=document.getElementById('sp-s').value;await flush('spaces');closeModal();toast('Space updated!');renderPage();}
+async function toggleSp(id){const sp=DB.spaces.find(s=>s.id===id);sp.active=!sp.active;await flush('spaces');toast(`Space ${sp.active?'restored':'archived'}.`);renderPage();}
+
+// lane CRUD
+function laneFormHtml(preSpId,l){
+  const rates=l?l.rates:{Residential:50,Local:75,'Out-of-State':100,International:150};
+  return `<div class="fg"><label class="flabel">Space</label><select class="fc" id="ln-sp">${DB.spaces.map(s=>`<option value="${s.id}"${s.id===(l?l.spaceId:preSpId)?' selected':''}>${s.name}</option>`).join('')}</select></div>
+    <div class="fg"><label class="flabel">Lane Name</label><input class="fc" id="ln-n" value="${l?l.name:''}" placeholder="e.g. Lane 1, Ramp A"></div>
+    <p class="flabel" style="margin-bottom:8px">Rates per Session ($)</p>
+    <div class="g2">${['Residential','Local','Out-of-State','International'].map(tier=>`<div class="fg"><label class="flabel">${tier}</label><input type="number" class="fc" id="ln-r${tier.replace(/[^a-z]/gi,'')}" value="${rates[tier]||50}"></div>`).join('')}</div>`;
+}
+function mAddLane(preSpId){openModal(`<div class="modal modal-md"><div class="modal-hd"><h3>Add Lane</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div><div class="modal-bd">${laneFormHtml(preSpId||DB.spaces[0]?.id,null)}</div><div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveLane()">Add Lane</button></div></div>`);}
+async function saveLane(){
+  const n=document.getElementById('ln-n').value.trim();if(!n){toast('Name required','warn');return;}
+  DB.lanes.push({id:nid('l'),spaceId:document.getElementById('ln-sp').value,name:n,rates:{Residential:+document.getElementById('ln-rResidential').value,Local:+document.getElementById('ln-rLocal').value,'Out-of-State':+document.getElementById('ln-rOutofState').value,International:+document.getElementById('ln-rInternational').value}});
+  await flush('lanes');closeModal();toast('Lane added!');renderPage();
+}
+function mEditLane(id){
+  const l=DB.lanes.find(ln=>ln.id===id);
+  openModal(`<div class="modal modal-md"><div class="modal-hd"><h3>Edit Lane — ${l.name}</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div><div class="modal-bd">${laneFormHtml(null,l)}</div><div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="updLane('${id}')">Save</button></div></div>`);
+}
+async function updLane(id){
+  const l=DB.lanes.find(ln=>ln.id===id);
+  l.name=document.getElementById('ln-n').value.trim()||l.name;l.spaceId=document.getElementById('ln-sp').value;
+  l.rates.Residential=+document.getElementById('ln-rResidential').value;l.rates.Local=+document.getElementById('ln-rLocal').value;
+  l.rates['Out-of-State']=+document.getElementById('ln-rOutofState').value;l.rates.International=+document.getElementById('ln-rInternational').value;
+  await flush('lanes');closeModal();toast('Lane updated!');renderPage();
+}
+async function dLane(id){if(!confirm('Delete lane?'))return;DB.lanes=DB.lanes.filter(l=>l.id!==id);await flush('lanes');toast('Lane deleted.');renderPage();}
+
+// slot CRUD
+function mAddSlot(preSpId){openModal(`<div class="modal modal-sm"><div class="modal-hd"><h3>Add Time Slot</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div><div class="modal-bd">
+  <div class="fg"><label class="flabel">Space</label><select class="fc" id="ts-sp">${DB.spaces.map(s=>`<option value="${s.id}"${s.id===preSpId?' selected':''}>${s.name}</option>`).join('')}</select></div>
+  <div class="fg"><label class="flabel">Label</label><input class="fc" id="ts-lbl" placeholder="e.g. 7am–9am"></div>
+  <div class="g2"><div class="fg"><label class="flabel">Start</label><input type="time" class="fc" id="ts-st" value="07:00"></div><div class="fg"><label class="flabel">End</label><input type="time" class="fc" id="ts-en" value="09:00"></div></div>
+</div><div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSlot()">Add Slot</button></div></div>`);}
+async function saveSlot(){
+  const lbl=document.getElementById('ts-lbl').value.trim();if(!lbl){toast('Label required','warn');return;}
+  DB.timeSlots.push({id:nid('ts'),spaceId:document.getElementById('ts-sp').value,label:lbl,start:document.getElementById('ts-st').value,end:document.getElementById('ts-en').value});
+  await flush('timeSlots');closeModal();toast('Slot added!');renderPage();
+}
+async function dSlot(id){if(!confirm('Delete slot?'))return;DB.timeSlots=DB.timeSlots.filter(s=>s.id!==id);await flush('timeSlots');toast('Slot deleted.');renderPage();}
+
+// ═══════════════════════════════════════
+// TEAMS
+// ═══════════════════════════════════════
+function pgTeams(){
+  if(!isAdmin()){document.getElementById('content').innerHTML='<div class="alert alert-warn">Admin only.</div>';return;}
+  document.getElementById('topbar-right').innerHTML=`<button class="btn btn-primary" onclick="mAddTeam()">${I.plus()} Add Team</button>`;
+  const active=DB.bookings.filter(b=>b.status==='Active');
+  document.getElementById('content').innerHTML=`<div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>Team</th><th>Status</th><th>Groups</th><th>Bookings</th><th>Revenue</th><th>Active</th><th></th></tr></thead>
+    <tbody>${DB.teams.map(t=>{
+      const bk=active.filter(b=>b.teamId===t.id);const rev=bk.reduce((s,b)=>s+b.cost,0);
+      return `<tr><td><strong>${t.name}</strong></td><td>${statusBadge(t.status)}</td>
+        <td>${DB.groups.filter(g=>g.teamId===t.id).length}</td><td>${bk.length}</td><td class="mono">${f$(rev)}</td>
+        <td>${t.active?'<span class="badge b-green">Active</span>':'<span class="badge b-gray">Inactive</span>'}</td>
+        <td style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="mEditTeam('${t.id}')">${I.edit()}</button>
+          <button class="btn btn-ghost btn-sm" onclick="togTeam('${t.id}')">${t.active?'Deactivate':'Activate'}</button></td>
+      </tr>`;}).join('')}
+    </tbody>
+  </table></div></div>`;
+}
+function teamFormHtml(t){return `<div class="fg"><label class="flabel">Team Name</label><input class="fc" id="tm-n" value="${t?t.name:''}" placeholder="Team name"></div>
+  <div class="fg"><label class="flabel">Status Tier</label><select class="fc" id="tm-s">${['Residential','Local','Out-of-State','International'].map(s=>`<option${t&&t.status===s?' selected':''}>${s}</option>`).join('')}</select></div>`;}
+function mAddTeam(){openModal(`<div class="modal modal-sm"><div class="modal-hd"><h3>Add Team</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div><div class="modal-bd">${teamFormHtml(null)}</div><div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTeam()">Add</button></div></div>`);}
+async function saveTeam(){const n=document.getElementById('tm-n').value.trim();if(!n){toast('Name required','warn');return;}DB.teams.push({id:nid('team'),name:n,status:document.getElementById('tm-s').value,active:true});await flush('teams');closeModal();toast('Team added!');renderPage();}
+function mEditTeam(id){const t=DB.teams.find(tm=>tm.id===id);openModal(`<div class="modal modal-sm"><div class="modal-hd"><h3>Edit Team</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div><div class="modal-bd">${teamFormHtml(t)}</div><div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="updTeam('${id}')">Save</button></div></div>`);}
+async function updTeam(id){const t=DB.teams.find(tm=>tm.id===id);t.name=document.getElementById('tm-n').value.trim()||t.name;t.status=document.getElementById('tm-s').value;await flush('teams');closeModal();toast('Team updated!');renderPage();}
+async function togTeam(id){const t=DB.teams.find(tm=>tm.id===id);t.active=!t.active;await flush('teams');toast(`Team ${t.active?'activated':'deactivated'}.`);renderPage();}
+
+// ═══════════════════════════════════════
+// GROUPS
+// ═══════════════════════════════════════
+function pgGroups(){
+  document.getElementById('topbar-right').innerHTML=`<button class="btn btn-primary" onclick="mAddGroup()">${I.plus()} Add Group</button>`;
+  const me=myId();const vis=isAdmin()?DB.groups:DB.groups.filter(g=>g.teamId===me);
+  const C=document.getElementById('content');
+  C.innerHTML=(!isAdmin()?`<div class="alert alert-info mb-12">Managing groups for <strong>${myTeam()?.name||''}</strong></div>`:'')+
+  `<div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>Group Name</th>${isAdmin()?'<th>Team</th>':''}<th></th></tr></thead>
+    <tbody>${vis.length===0?`<tr><td colspan="3"><div class="empty"><p>No groups yet.</p></div></td></tr>`:
+      vis.map(g=>`<tr><td><strong>${g.name}</strong></td>${isAdmin()?`<td>${teamBadge(g.teamId)}</td>`:''}<td style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="mEditGrp('${g.id}')">${I.edit()}</button>
+        <button class="btn btn-danger btn-sm" onclick="dGrp('${g.id}')">${I.trash()}</button>
+      </td></tr>`).join('')}
+    </tbody>
+  </table></div></div>`;
+}
+function grpFormHtml(g){return (isAdmin()?`<div class="fg"><label class="flabel">Team</label><select class="fc" id="gr-t">${DB.teams.map(t=>`<option value="${t.id}"${g&&g.teamId===t.id?' selected':''}>${t.name}</option>`).join('')}</select></div>`:`<input type="hidden" id="gr-t" value="${myId()}">`)+
+  `<div class="fg"><label class="flabel">Group Name</label><input class="fc" id="gr-n" value="${g?g.name:''}" placeholder="e.g. U14 Boys"></div>`;}
+function mAddGroup(){openModal(`<div class="modal modal-sm"><div class="modal-hd"><h3>Add Group</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div><div class="modal-bd">${grpFormHtml(null)}</div><div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveGrp()">Add</button></div></div>`);}
+async function saveGrp(){const n=document.getElementById('gr-n').value.trim();const tid=document.getElementById('gr-t').value;if(!n||!tid){toast('Fill all fields','warn');return;}DB.groups.push({id:nid('g'),teamId:tid,name:n});await flush('groups');closeModal();toast('Group added!');renderPage();}
+function mEditGrp(id){const g=DB.groups.find(gr=>gr.id===id);openModal(`<div class="modal modal-sm"><div class="modal-hd"><h3>Edit Group</h3><button class="close-btn" onclick="closeModal()">${I.x()}</button></div><div class="modal-bd">${grpFormHtml(g)}</div><div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="updGrp('${id}')">Save</button></div></div>`);}
+async function updGrp(id){const g=DB.groups.find(gr=>gr.id===id);g.name=document.getElementById('gr-n').value.trim()||g.name;g.teamId=document.getElementById('gr-t').value;await flush('groups');closeModal();toast('Group updated!');renderPage();}
+async function dGrp(id){if(!confirm('Delete group?'))return;DB.groups=DB.groups.filter(g=>g.id!==id);await flush('groups');toast('Group deleted.');renderPage();}
+
+// ═══════════════════════════════════════
+// INVOICING
+// ═══════════════════════════════════════
+function pgInvoicing(){
+  if(!isAdmin()){document.getElementById('content').innerHTML='<div class="alert alert-warn">Admin only.</div>';return;}
+  document.getElementById('topbar-right').innerHTML=`<button class="btn btn-gold" onclick="exportCSV()">${I.dl()} Export CSV</button>`;
+  document.getElementById('content').innerHTML=`
+  <div class="card mb-16"><div class="card-hd"><h3>Filters</h3></div><div class="card-bd"><div class="flex gap-8 fw ai-c">
+    <div><label class="flabel">Team</label><select class="fc" id="inv-t" style="width:180px"><option value="">All Teams</option>${DB.teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+    <div><label class="flabel">Space</label><select class="fc" id="inv-sp" style="width:160px"><option value="">All Spaces</option>${DB.spaces.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+    <div><label class="flabel">From</label><input type="date" class="fc" id="inv-from" value="2025-03-01" style="width:140px"></div>
+    <div><label class="flabel">To</label><input type="date" class="fc" id="inv-to" value="2025-03-31" style="width:140px"></div>
+    <div style="align-self:flex-end"><button class="btn btn-primary" onclick="genRpt()">Generate</button></div>
+  </div></div></div>
+  <div id="inv-res"></div>`;
+  genRpt();
+}
+function getFiltBks(){
+  let bks=DB.bookings.filter(b=>b.status==='Active');
+  const t=document.getElementById('inv-t').value;const sp=document.getElementById('inv-sp').value;
+  const fr=document.getElementById('inv-from').value;const to=document.getElementById('inv-to').value;
+  if(t)bks=bks.filter(b=>b.teamId===t);if(sp)bks=bks.filter(b=>b.spaceId===sp);
+  if(fr)bks=bks.filter(b=>b.date>=fr);if(to)bks=bks.filter(b=>b.date<=to);
+  return bks;
+}
+function genRpt(){
+  const bks=getFiltBks();const R=document.getElementById('inv-res');
+  if(!bks.length){R.innerHTML='<div class="empty"><p>No bookings match the filters.</p></div>';return;}
+  const byT={};bks.forEach(b=>{if(!byT[b.teamId])byT[b.teamId]=[];byT[b.teamId].push(b);});
+  const grand=bks.reduce((s,b)=>s+b.cost,0);
+  R.innerHTML=`<div class="card mb-16"><div class="card-hd"><h3>Summary</h3><span class="mono" style="font-size:15px;font-weight:600">Grand Total: ${f$(grand)}</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Team</th><th>Status</th><th>Sessions</th><th>Total</th></tr></thead><tbody>
+      ${Object.entries(byT).map(([tid,tb])=>{const t=lk.team(tid);const tot=tb.reduce((s,b)=>s+b.cost,0);
+        return `<tr><td><strong>${t?t.name:'Unknown'}</strong></td><td>${t?statusBadge(t.status):''}</td><td>${tb.length}</td><td class="mono" style="font-weight:600">${f$(tot)}</td></tr>`;}).join('')}
+    </tbody></table></div></div>
+  ${Object.entries(byT).map(([tid,tb])=>{const t=lk.team(tid);const tot=tb.reduce((s,b)=>s+b.cost,0);
+    return `<div class="card mb-16"><div class="card-hd"><div class="flex ai-c gap-8"><h3>${t?t.name:'?'}</h3>${t?statusBadge(t.status):''}</div><span class="mono" style="font-size:14px;font-weight:600">${f$(tot)}</span></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Space</th><th>Lane</th><th>Slot</th><th>Group</th><th>Tier</th><th>Cost</th></tr></thead><tbody>
+        ${tb.map(b=>`<tr><td class="mono text-sm">${b.date}</td><td>${lk.spaceNm(b.spaceId)}</td><td>${lk.laneNm(b.laneId)}</td><td>${lk.slotLbl(b.slotId)}</td><td>${b.groupId?lk.groupNm(b.groupId):'—'}</td><td>${t?statusBadge(t.status):''}</td><td class="mono">${f$(b.cost)}</td></tr>`).join('')}
+        <tr style="background:var(--bg)"><td colspan="6" style="text-align:right;font-size:11px;color:var(--text-muted);font-weight:500">SUBTOTAL</td><td class="mono" style="font-weight:600">${f$(tot)}</td></tr>
+      </tbody></table></div></div>`;}).join('')}`;
+}
+function exportCSV(){
+  const bks=getFiltBks();
+  const rows=bks.map(b=>{const t=lk.team(b.teamId);return [b.date,t?t.name:'',t?t.status:'',lk.spaceNm(b.spaceId),lk.laneNm(b.laneId),lk.slotLbl(b.slotId),b.groupId?lk.groupNm(b.groupId):'',b.cost].join(',');});
+  const blob=new Blob(['Date,Team,Status,Space,Lane,Slot,Group,Cost\n'+rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='op-report.csv';a.click();toast('CSV exported!');
+}
+
+// ═══════════════════════════════════════
+// ROLE SWITCHER
+// ═══════════════════════════════════════
+document.getElementById('role-select').addEventListener('change',function(){
+  S.role=this.value;
+  const nms={admin:'Administrator',pcss:'Coach / PCSS',rowmark:'Coach / Rowmark',uofU:'Coach / UofU'};
+  const tms={pcss:'PCSS',rowmark:'Rowmark',uofU:'University of Utah'};
+  document.getElementById('sb-name').textContent=nms[this.value]||this.value;
+  document.getElementById('sb-team-lbl').textContent=isAdmin()?'':(tms[this.value]||'');
+  S.page='dashboard';renderNav();renderPage();
+});
+
+// ═══════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════
+loadDB().then(()=>{renderNav();renderPage();});
+</script>
+</body>
+</html>
